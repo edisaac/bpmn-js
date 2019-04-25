@@ -1413,6 +1413,70 @@ describe('features/modeling/rules - BpmnRules', function() {
       }
     ));
 
+
+    it('not connect more than one sequence flow to EventBasedGateway target event', inject(
+      function(canvas, modeling, elementFactory, bpmnRules) {
+
+        // given
+        var rootElement = canvas.getRootElement(),
+            eventBasedGatewayShape = elementFactory.createShape(
+              { type: 'bpmn:EventBasedGateway' }
+            ),
+            eventBasedGatewayTargetShape = elementFactory.createShape({
+              type: 'bpmn:IntermediateCatchEvent',
+              eventDefinitionType: 'bpmn:MessageEventDefinition'
+            }),
+            taskShape = elementFactory.createShape({ type: 'bpmn:Task' });
+
+        // when
+        modeling.createShape(
+          eventBasedGatewayShape, {
+            x: 50, y: 50
+          },
+          rootElement
+        );
+
+        modeling.createShape(
+          eventBasedGatewayTargetShape, {
+            x: 150, y: 50
+          },
+          rootElement
+        );
+
+        modeling.createShape(
+          taskShape, {
+            x: 250, y: 50
+          },
+          rootElement
+        );
+
+        modeling.connect(
+          eventBasedGatewayShape,
+          eventBasedGatewayTargetShape, {
+            type: 'bpmn:SequenceFlow'
+          }
+        );
+
+        modeling.connect(
+          eventBasedGatewayTargetShape,
+          taskShape, {
+            type: 'bpmn:SequenceFlow'
+          }
+        );
+
+        var canConnect = bpmnRules.canConnect(
+          taskShape,
+          eventBasedGatewayTargetShape, {
+            type: 'bpmn:SequenceFlow'
+          }
+        );
+
+        // then
+        expect(canConnect).to.be.false;
+      }
+    ));
+
+
     it('create IntermediateEvent in SubProcess body', inject(
       function(elementFactory, elementRegistry, bpmnRules) {
 
